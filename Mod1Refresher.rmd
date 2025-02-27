@@ -1,0 +1,35 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+diamonddata = diamonds
+InventoryData <- read_csv("C:/Users/bjohn/Downloads/InventoryData.csv")
+View(InventoryData)
+
+View(diamonddata)
+nrow(diamonddata)
+ncol(diamonddata)
+
+ggplot(diamonddata, aes(x=carat,y=price, colour = cut)) +
+  geom_point()
+
+mean(InventoryData$`On Hand`)
+
+nrow(InventoryData)
+
+inventoryA <- InventoryData %>%
+  filter(Supplier == "A")
+nrow(inventoryA)
+inventoryA = mutate(inventoryA, OnHandRatio = `On Hand` / `Annual Demand`)
+
+avg_cost <- inventoryA %>%
+  group_by(`Item SKU`) %>%
+  summarize(SKUAvgCost = mean(`Cost per Unit ($)`, na.rm = TRUE))
+
+

@@ -1,0 +1,94 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+```{r Setup}
+library(tidyverse)
+library(tidymodels)
+install.packages("glmnet")
+library(glmnet)
+library(GGally)
+install.packages("ggcorrplot")
+library(ggcorrplot)
+install.packages("MASS")
+library(MASS)
+install.packages("car")
+library(car)
+install.packages("lubridate")
+library(lubridate)
+library(lmtest)
+install.packages("splines")
+library(splines)
+
+library(readr)
+bike <- read_csv("bike_cleaned-3.csv")
+View(bike)
+
+
+```
+
+```{r Format}
+bike = bike %>%
+  mutate(dteday = mdy(dteday))
+
+bike = bike %>%
+  mutate_if(is.character, as_factor)
+
+bike = bike %>%
+  mutate(hr = as_factor(hr))
+
+```
+
+```{r Questions}
+#q1
+cor(bike$windspeed,bike$count) #0.093
+cor(bike$hum,bike$count) #-0.32
+cor(bike$atemp,bike$count) #0.4
+cor(bike$temp,bike$count) #0.404
+
+#q2
+ss = bike %>%
+  group_by(season) %>%
+  summarize(total_count = sum(count), .groups = "drop")
+
+ggplot(ss, aes(x=season, y = total_count, fill = season))+
+  geom_bar(stat = "identity")
+
+#q3,4,5
+reg1 = lm(count ~ hr, bike)
+summary(reg1)
+
+#q6
+reg2 = lm(count ~ temp + hr, bike)
+summary(reg2)
+ggplot(bike, aes(x=temp, y=count))+
+  geom_point()
+
+
+#q9
+reg3 = lm(count ~ temp + atemp, bike)
+summary(reg3)
+
+#q12
+allmod = lm(
+  count ~ season + mnth +hr+holiday+weekday+workingday+weathersit+temp+atemp+hum+windspeed, bike)
+
+stepmod = step(allmod, direction = "backward", trace = 0)
+summary(stepmod)
+
+
+x = model.matrix(count ~ season+mnth+hr+holiday+weekday+workingday+weathersit+temp+atemp+hum+windspeed, bike)[,-1]
+
+y = bike$count
+lasso_model = cv.glmnet(x,y,alpha = 1)
+summary(lasso_model)
+```
+
+
+
+
+
+
+
+

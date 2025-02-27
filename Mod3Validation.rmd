@@ -1,0 +1,47 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+```{r Setup}
+library(caret)
+library(tidyverse)
+library(lubridate)
+library(tidymodels)
+library(readr)
+library(dplyr)
+bike <- read_csv("bike_cleaned-4.csv")
+View(bike)
+
+bike$dteday = as.Date(bike$dteday, format = "%Y-%m-$d")
+bike = bike %>%
+  mutate_if(is.character, as.factor)
+bike$hr = as.factor(bike$hr)
+```
+
+```{r Questions}
+
+#q1
+split = initial_split(bike, prop = 0.7, strata = count)
+train = training(split)
+test = testing(split)
+
+#q3
+lr <- lm(count ~ season + mnth + hr + holiday + weekday + temp + weathersit, data = train)
+
+summary(lr)
+arsq = summary(lr)$adj.r.squared
+round(arsq, 4)
+#q4
+predict_train = predict(lr, newdata = train)
+hist(predict_train, main = "Histogram of Predicted Count", xlab = "Predicted Count", col = "blue", breaks = 20)
+
+#q5
+predict_test = predict(lr, newdata = test)
+R_squared <- cor(test$count, predict_test)^2
+round(R_squared, 4)
+
+
+
+```
+

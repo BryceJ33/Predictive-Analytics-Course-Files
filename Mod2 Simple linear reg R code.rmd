@@ -1,0 +1,52 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+```{r Setup}
+library(tidyverse)
+install.packages("GGally")
+library(ggplot2)
+library(GGally)
+install.packages("tidymodels")
+library(tidymodels)
+install.packages("lmtest")
+library(lmtest)
+
+air = airquality
+```
+
+```{r Questions}
+#q1
+nrow(air)
+#q2
+ncol(air)
+#q3
+sum(is.na(air$Ozone))
+#q4
+air2 = air %>%
+  drop_na()
+nrow(air2)
+#q5
+ncol(air2)
+#q6,7,8
+ggpairs(air2)
+#q9,10,11
+ggplot(air2, mapping = aes(x=Temp,y=Ozone))+
+  geom_point()
+reg1 = lm(Ozone ~ Temp, air2)
+summary(reg1)
+#q12
+confint(reg1)
+#q14
+dw_test = dwtest(reg1)
+
+#q13
+tmp = 80
+slope = coef(reg1)[2]
+int = coef(reg1)[1]
+
+oz = int + slope*80
+oz
+```
+

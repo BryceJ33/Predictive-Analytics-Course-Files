@@ -1,0 +1,99 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+```{r Setup}
+library(tidyverse)
+install.packages("cluster")
+library(cluster)
+install.packages("factoextra")
+library(factoextra)
+install.packages("dendextend")
+library(dendextend)
+library(ggplot2)
+library(readr)
+trucks <- read_csv("trucks-1.csv")
+```
+
+```{r}
+#q1
+
+plot1 = ggplot(trucks, aes(x = Distance, y = Speeding))+
+  geom_point()
+plot1
+```
+
+```{r}
+#q2
+
+trucks_cleaned = trucks %>%
+  mutate(
+    Distance = scale(Distance, center = TRUE, scale = TRUE),
+    Speeding = scale(Speeding, center = TRUE, scale = TRUE)
+  )
+trucks_cleaned
+max(trucks_cleaned$Distance)
+
+kmeans_result = kmeans(trucks_cleaned, centers = 2, nstart = 25)
+install.packages("broom")
+library(broom)
+trucks_clustered = augment(kmeans_result,trucks)
+
+plot2 = ggplot(trucks_clustered, aes(x=Distance, y = Speeding, color = as.factor(.cluster)))+geom_point()
+plot2
+```
+
+```{r}
+install.packages("patchwork")
+library(patchwork)
+set.seed(412)
+
+plot_kmeans <- function(k) {
+  model <- kmeans(trucks_cleaned, centers = k, nstart = 25)
+  trucks_clustered <- trucks_cleaned %>%
+    mutate(Cluster = as.factor(model$cluster))
+  
+  ggplot(trucks_clustered, aes(x = Distance, y = Speeding, color = Cluster)) +
+    geom_point(size = 4) +
+    labs(title = paste("K-Means Clustering (k =", k, ")"),
+         x = "Distance",
+         y = "Speeding") +
+    theme_minimal()
+}
+
+# Generate plots for k = 1 to 8
+plot_list <- map(1:8, plot_kmeans)
+
+# Arrange plots in a grid
+(plot_list[[1]] | plot_list[[2]] | plot_list[[3]]) /
+(plot_list[[4]] | plot_list[[5]] | plot_list[[6]]) /
+(plot_list[[7]] | plot_list[[8]])
+ 
+print(plot_list)
+```
+
+```{r}
+
+# Set seed for reproducibility
+set.seed(412)
+
+# Compute WSS for k = 1 to 8
+wss_values <- map_dbl(1:8, function(k) {
+  kmeans(trucks_cleaned, centers = k, nstart = 25)$tot.withinss
+})
+
+# Create a data frame for plotting
+wss_df <- data.frame(k = 1:8, WSS = wss_values)
+
+# Generate Elbow Method plot
+ggplot(wss_df, aes(x = k, y = WSS)) +
+  geom_line(color = "blue", size = 1) +
+  geom_point(color = "red", size = 3) +
+  labs(title = "Elbow Method for Optimal k",
+       x = "Number of Clusters (k)",
+       y = "Total Within-Cluster Sum of Squares (WSS)") +
+  theme_minimal()
+
+```
+
